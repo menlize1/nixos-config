@@ -14,8 +14,28 @@
   
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.linuxPackages_zen;
   boot.kernelModules = [ "tun" ];
+
+  # ============================================================================
+  # ГРАФИКА И ДРАЙВЕРЫ NVIDIA
+  # ============================================================================
+
+  hardware.graphics = {
+    enable = true;
+    enable32Bit = true;
+  };
+
+  services.xserver.videoDrivers = [ "nvidia" ];
+
+  hardware.nvidia = {
+    modesetting.enable = true;
+    powerManagement.enable = false;
+    powerManagement.finegrained = false;
+    open = true; # RTX 3060 отлично работает с открытым модулем ядра NVIDIA
+    nvidiaSettings = true;
+    package = config.boot.kernelPackages.nvidiaPackages.stable;
+  };
 
   system.stateVersion = "25.11"; 
 
@@ -85,8 +105,21 @@
   ];
 
   # ============================================================================
+  # ШРИФТЫ
+  # ============================================================================
+
+  fonts.packages = with pkgs; [
+    nerd-fonts.jetbrains-mono
+  ];
+
+  # ============================================================================
   # СЕРВИСЫ (Звук, Печать, Flatpak, GameMode)
   # ============================================================================
+
+  boot.kernel.sysctl = {
+    "vm.max_map_count" = 2147483642; # Ускоряет запуск и стабильность тяжелых игр
+    "fs.inotify.max_user_watches" = 524288;
+  };
 
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
@@ -99,7 +132,16 @@
 
   services.printing.enable = false;
   services.flatpak.enable = true;
+  zramSwap.enable = true;
+
   programs.gamemode.enable = true;
+  programs.steam = {
+    enable = true;
+    gamescopeSession.enable = true;
+    remotePlay.openFirewall = true; # Для Steam Link
+    dedicatedServer.openFirewall = true;
+  };
+  programs.gamescope.enable = true;
 
   # ============================================================================
   # ПОЛЬЗОВАТЕЛИ
@@ -109,7 +151,10 @@
     isNormalUser = true;
     description = "menlize";
     extraGroups = [ "networkmanager" "wheel" "gamemode" ];
+    shell = pkgs.fish;
   };
+
+  programs.fish.enable = true;
 
   # ============================================================================
   # СИСТЕМНЫЕ ПАКЕТЫ
