@@ -79,6 +79,11 @@
 
   services.xserver.excludePackages = [ pkgs.xterm ];
 
+  # Настройка основного монитора для GDM
+  systemd.tmpfiles.rules = [
+    "L+ /var/lib/gdm/.config/monitors.xml - - - - /home/menlize/.config/monitors.xml"
+  ];
+
   # ============================================================================
   # СЕРВИСЫ (Звук, Печать, Flatpak, GameMode)
   # ============================================================================
